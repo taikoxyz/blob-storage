@@ -30,11 +30,11 @@ func GetConfig() (*Config, error) {
 	cfg := &Config{}
 	cfg.Networks = []NetworkConfig{
 		{
-			RPCURL:      "wss://ethereum-holesky.publicnode.com",
-			NetworkName: "holesky",
+			RPCURL:      "wss://l1ws.internal.taiko.xyz",
+			NetworkName: "taiko_internal_l1",
 			IndexedEvents: []IndexedEvent{
 				{
-					Contract:  "0xB20BB9105e007Bd3E0F73d63D4D3dA2c8f736b77",
+					Contract:  "0xbE71D121291517c85Ab4d3ac65d70F6b1FD57118",
 					EventHash: "0xa62cea5af360b010ef0d23472a2a7493b54175fd9fd2f9c2aa2bb427d2f4d3ca",
 					EventName: "BlockProposed",
 					Callback:  BlockProposedCallback,
