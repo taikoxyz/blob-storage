@@ -1,11 +1,7 @@
 package main
 
 import (
-	// "fmt"
-
 	"log"
-
-	// "os"
 
 	"github.com/taikoxyz/blob-storage/internal/config"
 	"github.com/taikoxyz/blob-storage/internal/indexer"
