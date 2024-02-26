@@ -15,14 +15,15 @@ import (
 // ChainListener struct holds the configuration and state for the Ethereum chain listener.
 type ChainListener struct {
 	rpcURL            string
+	beaconURL         string
 	contractAddress   common.Address
 	eventHash         common.Hash
 	startHeight       *big.Int
-	eventCallbackFunc func(types.Log)
+	eventCallbackFunc func(string, string, types.Log)
 }
 
 // NewChainListener creates a new ChainListener instance.
-func NewChainListener(rpcURL string, contractAddress string) *ChainListener {
+func NewChainListener(rpcURL string, beaconURL string, contractAddress string) *ChainListener {
 	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
 		log.Fatal("Failed to connect to the Ethereum client:", err)
@@ -39,13 +40,14 @@ func NewChainListener(rpcURL string, contractAddress string) *ChainListener {
 
 	return &ChainListener{
 		rpcURL:          rpcURL,
+		beaconURL:       beaconURL,
 		contractAddress: common.HexToAddress(contractAddress),
 		startHeight:     header.Number,
 	}
 }
 
 // SubscribeEvent subscribes to the specified event.
-func (cl *ChainListener) SubscribeEvent(eventHash string, callbackFunc func(types.Log)) {
+func (cl *ChainListener) SubscribeEvent(eventHash string, callbackFunc func(string, string, types.Log)) {
 	cl.eventHash = common.HexToHash(eventHash)
 	cl.eventCallbackFunc = callbackFunc
 }
@@ -84,5 +86,5 @@ func (cl *ChainListener) Start() {
 
 // handleEvent handles the incoming Ethereum event.
 func (cl *ChainListener) handleEvent(log types.Log) {
-	cl.eventCallbackFunc(log)
+	cl.eventCallbackFunc(cl.rpcURL, cl.beaconURL, log)
 }

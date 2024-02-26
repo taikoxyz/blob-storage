@@ -23,7 +23,7 @@ func (idx *Indexer) Run() error {
 	// Initialize listeners for each network
 	for _, network := range idx.cfg.Networks {
 		for _, event := range network.IndexedEvents {
-			listener := chainlistener.NewChainListener(network.RPCURL, event.Contract)
+			listener := chainlistener.NewChainListener(network.RPCURL, network.BeaconURL, event.Contract)
 
 			listener.SubscribeEvent(event.EventHash, event.Callback)
 

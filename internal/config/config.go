@@ -3,7 +3,7 @@ package config
 import "github.com/ethereum/go-ethereum/core/types"
 
 // CallbackFunc represents the type of the callback function for handling events.
-type CallbackFunc func(types.Log)
+type CallbackFunc func(string, string, types.Log)
 
 // IndexedEvent struct represents the configuration for an indexed event.
 type IndexedEvent struct {
@@ -16,6 +16,7 @@ type IndexedEvent struct {
 // NetworkConfig struct represents the configuration for a network.
 type NetworkConfig struct {
 	RPCURL        string
+	BeaconURL     string // Add this field
 	NetworkName   string
 	IndexedEvents []IndexedEvent
 }
@@ -31,6 +32,7 @@ func GetConfig() (*Config, error) {
 	cfg.Networks = []NetworkConfig{
 		{
 			RPCURL:      "wss://l1ws.internal.taiko.xyz",
+			BeaconURL:   "https://l1beacon.internal.taiko.xyz/eth/v1/beacon/blob_sidecars/", // Set the beacon URL here
 			NetworkName: "taiko_internal_l1",
 			IndexedEvents: []IndexedEvent{
 				{
