@@ -1,36 +1,92 @@
 package indexer
 
 import (
-	"github.com/taikoxyz/blob-storage/internal/config"
-	"github.com/taikoxyz/blob-storage/pkg/chainlistener"
+	"context"
+	"fmt"
+	"log"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// Indexer struct holds the indexer configuration and state.
+// Indexer struct holds the configuration and state for the Ethereum chain listener.
 type Indexer struct {
-	cfg *config.Config
-	// Add other fields as needed
+	rpcURL            string
+	beaconURL         string
+	networkName       string
+	contractAddress   common.Address
+	eventHash         common.Hash
+	startHeight       *big.Int
+	eventCallbackFunc func(string, string, string, types.Log)
 }
 
 // NewIndexer creates a new Indexer instance.
-func NewIndexer(cfg *config.Config) *Indexer {
+func NewIndexer(rpcURL, beaconURL, networkName, contractAddress string) *Indexer {
+	client, err := ethclient.Dial(rpcURL)
+	if err != nil {
+		log.Fatal("Failed to connect to the Ethereum client:", err)
+	}
+
+	header, err := client.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(header.Number)
+
+	fmt.Println(client.Client())
+
 	return &Indexer{
-		cfg: cfg,
+		rpcURL:          rpcURL,
+		beaconURL:       beaconURL,
+		networkName:     networkName,
+		contractAddress: common.HexToAddress(contractAddress),
+		startHeight:     header.Number,
 	}
 }
 
-// Run starts the indexer and listens for events.
-func (idx *Indexer) Run() error {
-	// Initialize listeners for each network
-	for _, network := range idx.cfg.Networks {
-		for _, event := range network.IndexedEvents {
-			listener := chainlistener.NewChainListener(network.RPCURL, network.BeaconURL, event.Contract)
+// SubscribeEvent subscribes to the specified event.
+func (indexer *Indexer) SubscribeEvent(eventHash string, callbackFunc func(string, string, string, types.Log)) {
+	indexer.eventHash = common.HexToHash(eventHash)
+	indexer.eventCallbackFunc = callbackFunc
+}
 
-			listener.SubscribeEvent(event.EventHash, event.Callback)
-
-			// Run the event listener for each network
-			go listener.Start()
-		}
-
+// Start starts the Ethereum chain listener/indexer.
+func (indexer *Indexer) Start() {
+	client, err := ethclient.Dial(indexer.rpcURL)
+	if err != nil {
+		log.Fatal("Failed to connect to the Ethereum client:", err)
 	}
-	select {}
+
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{indexer.contractAddress},
+		FromBlock: indexer.startHeight,
+	}
+
+	logsCh := make(chan types.Log)
+	sub, err := client.SubscribeFilterLogs(context.Background(), query, logsCh)
+	if err != nil {
+		log.Fatal("Failed to subscribe to logs:", err)
+	}
+
+	log.Println("Ethereum chain listener started.")
+
+	for {
+		select {
+		case err := <-sub.Err():
+			log.Fatal("Subscription error:", err)
+		case log := <-logsCh:
+			if log.Topics[0] == indexer.eventHash {
+				go indexer.HandleEvent(log)
+			}
+		}
+	}
+}
+
+// HandleEvent handles the incoming Ethereum event.
+func (indexer *Indexer) HandleEvent(log types.Log) {
+	indexer.eventCallbackFunc(indexer.rpcURL, indexer.beaconURL, indexer.networkName, log)
 }

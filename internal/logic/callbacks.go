@@ -1,6 +1,6 @@
 // callbacks.go
 
-package config
+package logic
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -21,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/taikoxyz/blob-storage/internal/taikol1"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Response struct {
@@ -35,7 +37,7 @@ type Response struct {
 // Callback functions
 
 // BlockProposedCallback is a callback for the "BlockProposed" event.
-func BlockProposedCallback(rpcURL, beaconURL string, log types.Log) {
+func BlockProposedCallback(rpcURL, beaconURL, networkName string, log types.Log) {
 
 	contractAbi, err := abi.JSON(strings.NewReader(taikol1.TaikoL1ABI))
 	if err != nil {
@@ -58,7 +60,7 @@ func BlockProposedCallback(rpcURL, beaconURL string, log types.Log) {
 		l1BlobHeight := eventData.Meta.L1Height + 1
 		blobHash := hex.EncodeToString(eventData.Meta.BlobHash[:])
 
-		storeBlob(rpcURL, beaconURL, strconv.Itoa(int(l1BlobHeight)), blobHash)
+		storeBlob(rpcURL, beaconURL, networkName, strconv.Itoa(int(l1BlobHeight)), blobHash)
 	}
 }
 
@@ -87,8 +89,11 @@ func calculateBlobHash(commitmentStr string) string {
 	return blobHashString
 }
 
-func storeBlob(rpcURL, beaconURL, blockID, blobHashInMeta string) error {
-
+func storeBlob(rpcURL, beaconURL, networkName, blockID, blobHashInMeta string) error {
+	cfg, err := GetConfig()
+	if err != nil {
+		log.Fatal("Error loading config:", err)
+	}
 	// url := fmt.Sprintf("https://l1beacon.internal.taiko.xyz/eth/v1/beacon/blob_sidecars/%s", blockID)
 	url := fmt.Sprintf("%s/%s", beaconURL, blockID)
 	response, err := http.Get(url)
@@ -130,17 +135,53 @@ func storeBlob(rpcURL, beaconURL, blockID, blobHashInMeta string) error {
 				fmt.Println("TIMESTAMP issue")
 				return errors.New("TIMESTAMP issue")
 			}
-			fmt.Println("The blobHash:", blobHashInMeta)
+			fmt.Println("The blobHash:", ("0x" + blobHashInMeta))
 			fmt.Println("The block:", blockNrBig)
 			fmt.Println("The kzg commitment:", data.KzgCommitment)
 			fmt.Println("The corresponding timestamp:", blockTs)
 			fmt.Println("The blob:", data.Blob[0:100])
+			fmt.Println("The networkName:", networkName)
+			// Store blob data in MongoDB
+			err = storeBlobMongoDB(cfg, blockID, ("0x" + blobHashInMeta), data.KzgCommitment, data.Blob, blockTs)
+			if err != nil {
+				log.Println("Error storing blob in MongoDB:", err)
+			}
 
 			return nil
 		}
 	}
 
 	return errors.New("BLOB not found")
+}
+
+func storeBlobMongoDB(cfg *Config, blockID, blobHashInMeta, kzgCommitment, blob string, blockTs uint64) error {
+	// Connect and store to MongoDB
+	mongoClient, err := NewMongoDBClient(cfg.MongoDB)
+	if err != nil {
+
+		fmt.Println("Hat itt?")
+		return err
+	}
+	defer mongoClient.Close()
+
+	// Get MongoDB collection
+	collection := mongoClient.Client.Database(cfg.MongoDB.Database).Collection("blobs")
+
+	// Insert blob data into MongoDB
+	_, err = collection.InsertOne(context.Background(), bson.M{
+		"block_id":       blockID,
+		"blob_hash":      blobHashInMeta,
+		"kzg_commitment": kzgCommitment,
+		"timestamp":      blockTs,
+		"blob_data":      blob, // Assuming this is the blob data field
+	})
+	if err != nil {
+		return err
+	}
+
+	log.Println("Blob data inserted into MongoDB successfully")
+
+	return err
 }
 
 // Add more functions as needed

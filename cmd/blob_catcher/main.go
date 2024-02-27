@@ -3,18 +3,17 @@ package main
 import (
 	"log"
 
-	"github.com/taikoxyz/blob-storage/internal/config"
 	"github.com/taikoxyz/blob-storage/internal/indexer"
+	"github.com/taikoxyz/blob-storage/internal/logic"
 )
 
 func main() {
-	cfg, err := config.GetConfig()
+	cfg, err := logic.GetConfig()
 	if err != nil {
 		log.Fatal("Error loading config:", err)
 	}
 
-	idx := indexer.NewIndexer(cfg)
-	if err := idx.Run(); err != nil {
+	if err := indexer.InitFromConfig(cfg); err != nil {
 		log.Fatal("Error running indexer:", err)
 	}
 }
