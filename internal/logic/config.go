@@ -48,7 +48,7 @@ func GetConfig() (*Config, error) {
 			NetworkName: "L2A",
 			IndexedEvents: []IndexedEvent{
 				{
-					Contract:  "0x6d2D299fEe48F3490Ed74d581bbDF4AD7b5Aa275",
+					Contract:  "0x1FD3Df7E9C15390c8589D2E4d43757eA692ae256",
 					EventHash: "0xa62cea5af360b010ef0d23472a2a7493b54175fd9fd2f9c2aa2bb427d2f4d3ca",
 					EventName: "BlockProposed",
 					Callback:  BlockProposedCallback,
@@ -61,7 +61,7 @@ func GetConfig() (*Config, error) {
 			NetworkName: "L2B",
 			IndexedEvents: []IndexedEvent{
 				{
-					Contract:  "0x674313F932cc0cE272154a288cf3De474D44e14F",
+					Contract:  "0x1670010000000000000000000000000000010001",
 					EventHash: "0xa62cea5af360b010ef0d23472a2a7493b54175fd9fd2f9c2aa2bb427d2f4d3ca",
 					EventName: "BlockProposed",
 					Callback:  BlockProposedCallback,

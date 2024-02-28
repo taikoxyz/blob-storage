@@ -135,12 +135,13 @@ func storeBlob(rpcURL, beaconURL, networkName, blockID, blobHashInMeta string) e
 				fmt.Println("TIMESTAMP issue")
 				return errors.New("TIMESTAMP issue")
 			}
+			// Debug prints
 			fmt.Println("The blobHash:", ("0x" + blobHashInMeta))
-			fmt.Println("The block:", blockNrBig)
-			fmt.Println("The kzg commitment:", data.KzgCommitment)
-			fmt.Println("The corresponding timestamp:", blockTs)
-			fmt.Println("The blob:", data.Blob[0:100])
-			fmt.Println("The networkName:", networkName)
+			// fmt.Println("The block:", blockNrBig)
+			// fmt.Println("The kzg commitment:", data.KzgCommitment)
+			// fmt.Println("The corresponding timestamp:", blockTs)
+			// fmt.Println("The blob:", data.Blob[0:100])
+			// fmt.Println("The networkName:", networkName)
 			// Store blob data in MongoDB
 			err = storeBlobMongoDB(cfg, blockID, ("0x" + blobHashInMeta), data.KzgCommitment, data.Blob, blockTs)
 			if err != nil {
@@ -169,7 +170,7 @@ func storeBlobMongoDB(cfg *Config, blockID, blobHashInMeta, kzgCommitment, blob 
 
 	// Insert blob data into MongoDB
 	_, err = collection.InsertOne(context.Background(), bson.M{
-		"block_id":       blockID,
+		//"block_id":       blockID, -> Not needed
 		"blob_hash":      blobHashInMeta,
 		"kzg_commitment": kzgCommitment,
 		"timestamp":      blockTs,

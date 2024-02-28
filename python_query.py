@@ -20,7 +20,7 @@ def query_blob_hash(collection_name, blob_hash):
 
 def main():
     collection_name = 'blobs'
-    blob_hash = 'YOUR_BLOB_HASH_TO_QUERY'
+    blob_hash = '0x016dfd20188f4486eda9f09ee8917727b2e42bdc50e02f2d115120e323627e69'
 
     result = query_blob_hash(collection_name, blob_hash)
     if result:
