@@ -141,7 +141,7 @@ func storeBlob(rpcURL, beaconURL, networkName, blockID, blobHashInMeta string) e
 			// fmt.Println("The kzg commitment:", data.KzgCommitment)
 			// fmt.Println("The corresponding timestamp:", blockTs)
 			// fmt.Println("The blob:", data.Blob[0:100])
-			// fmt.Println("The networkName:", networkName)
+			fmt.Println("The networkName:", networkName)
 			// Store blob data in MongoDB
 			err = storeBlobMongoDB(cfg, blockID, ("0x" + blobHashInMeta), data.KzgCommitment, data.Blob, blockTs)
 			if err != nil {
@@ -159,8 +159,6 @@ func storeBlobMongoDB(cfg *Config, blockID, blobHashInMeta, kzgCommitment, blob 
 	// Connect and store to MongoDB
 	mongoClient, err := NewMongoDBClient(cfg.MongoDB)
 	if err != nil {
-
-		fmt.Println("Hat itt?")
 		return err
 	}
 	defer mongoClient.Close()
