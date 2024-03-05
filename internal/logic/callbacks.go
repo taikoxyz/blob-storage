@@ -121,7 +121,6 @@ func storeBlob(rpcURL, beaconURL, networkName, blockID, blobHashInMeta string) e
 
 		// Comparing the hex strings of meta.blobHash (blobHash)
 		if calculateBlobHash(data.KzgCommitment) == blobHashInMeta {
-			fmt.Println("BLOB found")
 			n := new(big.Int)
 
 			blockNrBig, ok := n.SetString(blockID, 10)

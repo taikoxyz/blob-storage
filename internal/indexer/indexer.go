@@ -24,18 +24,19 @@ type Indexer struct {
 }
 
 // NewIndexer creates a new Indexer instance.
-func NewIndexer(rpcURL, beaconURL, networkName, contractAddress string) *Indexer {
+func NewIndexer(rpcURL, beaconURL, networkName, contractAddress string, pastEvents bool, startBlockNumber *big.Int) *Indexer {
 	client, err := ethclient.Dial(rpcURL)
 	if err != nil {
 		log.Fatal("Failed to connect to the Ethereum client:", err)
 	}
 
-	header, err := client.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		log.Fatal(err)
+	if pastEvents == false {
+		header, err := client.HeaderByNumber(context.Background(), nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		startBlockNumber = header.Number
 	}
-
-	fmt.Println(header.Number)
 
 	fmt.Println(client.Client())
 
@@ -44,7 +45,7 @@ func NewIndexer(rpcURL, beaconURL, networkName, contractAddress string) *Indexer
 		beaconURL:       beaconURL,
 		networkName:     networkName,
 		contractAddress: common.HexToAddress(contractAddress),
-		startHeight:     header.Number,
+		startHeight:     startBlockNumber,
 	}
 }
 
@@ -72,7 +73,9 @@ func (indexer *Indexer) Start() {
 		log.Fatal("Failed to subscribe to logs:", err)
 	}
 
-	log.Println("Ethereum chain listener started.")
+	log.Println("Indexer for ", indexer.networkName, " started.")
+
+	log.Println("Scraping from blockheight: ", indexer.startHeight)
 
 	for {
 		select {

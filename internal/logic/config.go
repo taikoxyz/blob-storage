@@ -32,10 +32,16 @@ type MongoDBConfig struct {
 	Database string
 }
 
+// ServerConfig struct represents the configuration for the api server.
+type ServerConfig struct {
+	Port string
+}
+
 // Config struct holds the overall configuration for the application.
 type Config struct {
 	Networks []NetworkConfig
 	MongoDB  MongoDBConfig
+	Server   ServerConfig
 }
 
 // GetConfig loads the configuration from environment variables or a config file.
@@ -77,6 +83,11 @@ func GetConfig() (*Config, error) {
 		Username: "",             // Add your MongoDB username if needed
 		Password: "",             // Add your MongoDB password if needed
 		Database: "blob_storage", // Choose your MongoDB database name
+	}
+
+	// Server listen and serve
+	cfg.Server = ServerConfig{
+		Port: ":27001",
 	}
 
 	return cfg, nil
